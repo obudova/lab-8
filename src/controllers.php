@@ -6,10 +6,22 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-//Request::setTrustedProxies(array('127.0.0.1'));
-
 $app->get('/', function () use ($app) {
-    return 123;
+    // Use your configuration to connect to db
+    // DO NOT CHANGE FIRST PARAMETER(HOST). Since app works in docker container, it's linking to other containers in own network that we described in docker-compose-yml
+    $mysqli = new mysqli('db', 'root', 'root', 'mysql', 3306);
+
+    if ($mysqli->connect_errno) {
+        return new JsonResponse(['message' => 'Bad connection to mysql'], Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    // Perform your query
+    $sql = "SELECT * FROM user";
+    if (!$result = $mysqli->query($sql)) {
+        return new JsonResponse(['message' => 'Bad query to mysql: ' . $mysqli->error], Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    return new JsonResponse($result->fetch_all());
 });
 
 $app->error(function (\Exception $e, Request $request, $code) use ($app) {
@@ -17,13 +29,5 @@ $app->error(function (\Exception $e, Request $request, $code) use ($app) {
         return;
     }
 
-    // 404.html, or 40x.html, or 4xx.html, or error.html
-    $templates = array(
-        'errors/'.$code.'.html.twig',
-        'errors/'.substr($code, 0, 2).'x.html.twig',
-        'errors/'.substr($code, 0, 1).'xx.html.twig',
-        'errors/default.html.twig',
-    );
-
-    return new Response($app['twig']->resolveTemplate($templates)->render(array('code' => $code)), $code);
+    return new JsonResponse(['message' => $e->getMessage()], $code);
 });
