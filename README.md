@@ -26,4 +26,4 @@ docker exec -ti lab-8_db_1 mysql -uroot -proot
 Then you could create your beautiful database with your pretty tables.
 
 ### Example of mysqli usage
-You could find simple example of `mysqli` usage at `src/controllers/php`
+You could find simple example of `mysqli` usage at `src/controller.php`
